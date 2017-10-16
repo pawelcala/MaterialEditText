@@ -1392,7 +1392,7 @@ public class MaterialEditText extends AppCompatEditText {
             if (dimInactiveLabel) {
                 alpha = ((int) ((floatingLabelAlwaysShown ? 1 : floatingLabelFraction) * 0xff * (0.74f * focusFraction * (isEnabled() ? 1 : 0) + 0.26f) * (floatingLabelTextColor != -1 ? 1 : Color.alpha(floatingLabelTextColor) / 256f)));
             } else {
-                alpha = 255;
+                alpha = (int) (255 * (floatingLabelAlwaysShown ? 1 : floatingLabelFraction));
             }
             textPaint.setAlpha(alpha);
 
