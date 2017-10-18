@@ -451,7 +451,7 @@ public class MaterialEditText extends AppCompatEditText {
         innerPaddingBottom = paddingsTypedArray.getDimensionPixelSize(4, padding);
 
         innerPaddingLeft += textIndentLeft;
-        innerPaddingRight -= textIndentRight;
+        innerPaddingRight += textIndentRight;
 
         paddingsTypedArray.recycle();
 
