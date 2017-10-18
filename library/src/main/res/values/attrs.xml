@@ -70,9 +70,13 @@
 
         <attr name="met_dimInactiveLabel" format="boolean" />
 
-        <attr name="met_indentLeft" format="dimension" />
+        <attr name="met_textIndentLeft" format="dimension" />
 
-        <attr name="met_indentRight" format="dimension" />
+        <attr name="met_textIndentRight" format="dimension" />
+
+        <attr name="met_labelIndentLeft" format="dimension" />
+
+        <attr name="met_labelIndentRight" format="dimension" />
 
     </declare-styleable>
 </resources>

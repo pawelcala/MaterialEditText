@@ -320,8 +320,11 @@ public class MaterialEditText extends AppCompatEditText {
     private List<METValidator> validators;
     private METLengthChecker lengthChecker;
 
-    private int indentLeft;
-    private int indentRight;
+    private int textIndentLeft;
+    private int textIndentRight;
+    private int labelIndentLeft;
+    private int labelIndentRight;
+
 
     public MaterialEditText(Context context) {
         super(context);
@@ -393,8 +396,11 @@ public class MaterialEditText extends AppCompatEditText {
         helperTextColor = typedArray.getColor(R.styleable.MaterialEditText_met_helperTextColor, -1);
         minBottomTextLines = typedArray.getInt(R.styleable.MaterialEditText_met_minBottomTextLines, 0);
         dimInactiveLabel = typedArray.getBoolean(R.styleable.MaterialEditText_met_dimInactiveLabel, false);
-        indentLeft = typedArray.getDimensionPixelSize(R.styleable.MaterialEditText_met_indentLeft, 0);
-        indentRight = typedArray.getDimensionPixelSize(R.styleable.MaterialEditText_met_indentRight, 0);
+
+        textIndentLeft = typedArray.getDimensionPixelSize(R.styleable.MaterialEditText_met_textIndentLeft, 0);
+        textIndentRight = typedArray.getDimensionPixelSize(R.styleable.MaterialEditText_met_textIndentRight, 0);
+        labelIndentLeft = typedArray.getDimensionPixelSize(R.styleable.MaterialEditText_met_labelIndentLeft, 0);
+        labelIndentRight = typedArray.getDimensionPixelSize(R.styleable.MaterialEditText_met_labelIndentRight, 0);
 
 
         String fontPathForAccent = typedArray.getString(R.styleable.MaterialEditText_met_accentTypeface);
@@ -444,8 +450,8 @@ public class MaterialEditText extends AppCompatEditText {
         innerPaddingRight = paddingsTypedArray.getDimensionPixelSize(3, padding);
         innerPaddingBottom = paddingsTypedArray.getDimensionPixelSize(4, padding);
 
-        innerPaddingLeft += indentLeft;
-        innerPaddingRight -= indentRight;
+        innerPaddingLeft += textIndentLeft;
+        innerPaddingRight -= textIndentRight;
 
         paddingsTypedArray.recycle();
 
@@ -1298,8 +1304,8 @@ public class MaterialEditText extends AppCompatEditText {
         int endX = getScrollX() + (iconRightBitmaps == null ? getWidth() : getWidth() - iconOuterWidth - iconPadding) - getPaddingRight();
         int lineStartY = getScrollY() + getHeight() - getPaddingBottom();
 
-        startX -= indentLeft;
-        endX += indentRight;
+        startX -= textIndentLeft;
+        endX += textIndentRight;
 
         // draw the icon(s)
         paint.setAlpha(255);
@@ -1392,8 +1398,10 @@ public class MaterialEditText extends AppCompatEditText {
                 floatingLabelStartX = (int) (endX - floatingLabelWidth);
             } else if ((getGravity() & Gravity.LEFT) == Gravity.LEFT) {
                 floatingLabelStartX = startX;
+                floatingLabelStartX += labelIndentLeft;
             } else {
                 floatingLabelStartX = startX + (int) (getInnerPaddingLeft() + (getWidth() - getInnerPaddingLeft() - getInnerPaddingRight() - floatingLabelWidth) / 2);
+                floatingLabelStartX += labelIndentLeft;
             }
 
             // calculate the vertical position
