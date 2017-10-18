@@ -320,6 +320,9 @@ public class MaterialEditText extends AppCompatEditText {
     private List<METValidator> validators;
     private METLengthChecker lengthChecker;
 
+    private int indentLeft;
+    private int indentRight;
+
     public MaterialEditText(Context context) {
         super(context);
         init(context, null);
@@ -390,6 +393,9 @@ public class MaterialEditText extends AppCompatEditText {
         helperTextColor = typedArray.getColor(R.styleable.MaterialEditText_met_helperTextColor, -1);
         minBottomTextLines = typedArray.getInt(R.styleable.MaterialEditText_met_minBottomTextLines, 0);
         dimInactiveLabel = typedArray.getBoolean(R.styleable.MaterialEditText_met_dimInactiveLabel, false);
+        indentLeft = typedArray.getDimensionPixelSize(R.styleable.MaterialEditText_met_indentLeft, 0);
+        indentRight = typedArray.getDimensionPixelSize(R.styleable.MaterialEditText_met_indentRight, 0);
+
 
         String fontPathForAccent = typedArray.getString(R.styleable.MaterialEditText_met_accentTypeface);
         if (fontPathForAccent != null && !isInEditMode()) {
@@ -437,6 +443,10 @@ public class MaterialEditText extends AppCompatEditText {
         innerPaddingTop = paddingsTypedArray.getDimensionPixelSize(2, padding);
         innerPaddingRight = paddingsTypedArray.getDimensionPixelSize(3, padding);
         innerPaddingBottom = paddingsTypedArray.getDimensionPixelSize(4, padding);
+
+        innerPaddingLeft += indentLeft;
+        innerPaddingRight -= indentRight;
+
         paddingsTypedArray.recycle();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
@@ -1287,6 +1297,9 @@ public class MaterialEditText extends AppCompatEditText {
         int startX = getScrollX() + (iconLeftBitmaps == null ? 0 : (iconOuterWidth + iconPadding)) + getPaddingLeft();
         int endX = getScrollX() + (iconRightBitmaps == null ? getWidth() : getWidth() - iconOuterWidth - iconPadding) - getPaddingRight();
         int lineStartY = getScrollY() + getHeight() - getPaddingBottom();
+
+        startX -= indentLeft;
+        endX += indentRight;
 
         // draw the icon(s)
         paint.setAlpha(255);
