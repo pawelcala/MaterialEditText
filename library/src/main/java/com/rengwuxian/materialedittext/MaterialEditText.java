@@ -450,8 +450,6 @@ public class MaterialEditText extends AppCompatEditText {
         innerPaddingRight = paddingsTypedArray.getDimensionPixelSize(3, padding);
         innerPaddingBottom = paddingsTypedArray.getDimensionPixelSize(4, padding);
 
-        innerPaddingLeft += textIndentLeft;
-        innerPaddingRight += textIndentRight;
 
         paddingsTypedArray.recycle();
 
@@ -798,6 +796,18 @@ public class MaterialEditText extends AppCompatEditText {
         correctPaddings();
     }
 
+    public void setTextIndent(int indentLeft, int indentRight) {
+        textIndentLeft = indentLeft;
+        textIndentRight = indentRight;
+        correctPaddings();
+    }
+
+    public void setLabelIndent(int indentLeft, int indentRight) {
+        labelIndentLeft = indentLeft;
+        labelIndentRight = indentRight;
+        correctPaddings();
+    }
+
     /**
      * Set paddings to the correct values
      */
@@ -809,7 +819,11 @@ public class MaterialEditText extends AppCompatEditText {
         } else {
             buttonsWidthRight = buttonsWidth;
         }
-        super.setPadding(innerPaddingLeft + extraPaddingLeft + buttonsWidthLeft, innerPaddingTop + extraPaddingTop, innerPaddingRight + extraPaddingRight + buttonsWidthRight, innerPaddingBottom + extraPaddingBottom);
+        int paddingLeft = innerPaddingLeft + extraPaddingLeft + buttonsWidthLeft + textIndentLeft;
+        int paddingTop = innerPaddingTop + extraPaddingTop;
+        int paddintRight = innerPaddingRight + extraPaddingRight + buttonsWidthRight + textIndentRight;
+        int paddintBottom = innerPaddingBottom + extraPaddingBottom;
+        super.setPadding(paddingLeft, paddingTop, paddintRight, paddintBottom);
     }
 
     private int getButtonsCount() {
