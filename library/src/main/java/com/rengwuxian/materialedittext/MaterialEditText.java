@@ -9,8 +9,10 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
+import android.graphics.Shader;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
@@ -298,6 +300,12 @@ public class MaterialEditText extends AppCompatEditText {
      */
     private boolean dimInactiveLabel = true;
 
+    private int underlineColorDark = -1;
+
+    private int errorColorDark = -1;
+
+    private int normalColorDark = -1;
+
     private boolean showClearButton;
     private boolean firstShown;
     private int iconSize;
@@ -362,6 +370,15 @@ public class MaterialEditText extends AppCompatEditText {
         textColorHintStateList = typedArray.getColorStateList(R.styleable.MaterialEditText_met_textColorHint);
         baseColor = typedArray.getColor(R.styleable.MaterialEditText_met_baseColor, defaultBaseColor);
 
+        underlineColorDark = typedArray.getColor(R.styleable
+                .MaterialEditText_met_underlineColorDark, -1);
+
+        normalColorDark = typedArray.getColor(R.styleable
+                .MaterialEditText_met_baseColorDark, -1);
+
+        errorColorDark = typedArray.getColor(R.styleable
+                .MaterialEditText_met_errorColorDark, -1);
+
         // retrieve the default primaryColor
         int defaultPrimaryColor;
         TypedValue primaryColorTypedValue = new TypedValue();
@@ -407,6 +424,7 @@ public class MaterialEditText extends AppCompatEditText {
         if (fontPathForAccent != null && !isInEditMode()) {
             accentTypeface = getCustomTypeface(fontPathForAccent);
             textPaint.setTypeface(accentTypeface);
+            textPaint.setFakeBoldText(true);
         }
         String fontPathForView = typedArray.getString(R.styleable.MaterialEditText_met_typeface);
         if (fontPathForView != null && !isInEditMode()) {
@@ -711,6 +729,21 @@ public class MaterialEditText extends AppCompatEditText {
         postInvalidate();
     }
 
+    public void setUnderlineColorDark(int color) {
+        this.underlineColorDark = color;
+        postInvalidate();
+    }
+
+    public void setErrorColorDark(int color) {
+        this.errorColorDark = color;
+        postInvalidate();
+    }
+
+    public void setNormalColorDark(int color) {
+        this.normalColorDark = color;
+        postInvalidate();
+    }
+
     public CharSequence getFloatingLabelText() {
         return floatingLabelText;
     }
@@ -860,6 +893,7 @@ public class MaterialEditText extends AppCompatEditText {
             Layout.Alignment alignment = (getGravity() & Gravity.RIGHT) == Gravity.RIGHT || isRTL() ?
                     Layout.Alignment.ALIGN_OPPOSITE : (getGravity() & Gravity.LEFT) == Gravity.LEFT ?
                     Layout.Alignment.ALIGN_NORMAL : Layout.Alignment.ALIGN_CENTER;
+
             textLayout = new StaticLayout(tempErrorText != null ? tempErrorText : helperText, textPaint, getWidth() - getBottomTextLeftOffset() - getBottomTextRightOffset() - getPaddingLeft() - getPaddingRight(), alignment, 1.0f, 0.0f, true);
             destBottomLines = Math.max(textLayout.getLineCount(), minBottomTextLines);
         } else {
@@ -1355,20 +1389,51 @@ public class MaterialEditText extends AppCompatEditText {
         if (!hideUnderline) {
             lineStartY += bottomSpacing;
             if (!isInternalValid()) { // not valid
-                paint.setColor(errorColor);
+                if (errorColorDark != -1) {
+                    paint.setShader(new LinearGradient(startX, lineStartY, endX, lineStartY,
+                            errorColor, errorColorDark, Shader.TileMode.CLAMP));
+                } else {
+                    paint.setShader(null);
+                    paint.setColor(errorColor);
+                }
                 canvas.drawRect(startX, lineStartY, endX, lineStartY + getPixel(2), paint);
             } else if (!isEnabled()) { // disabled
-                paint.setColor(underlineColor != -1 ? underlineColor : baseColor & 0x00ffffff | 0x44000000);
+                if (underlineColor != -1) {
+                    if (underlineColorDark != -1) {
+                        paint.setShader(new LinearGradient(startX, lineStartY, endX, lineStartY,
+                                underlineColor, underlineColorDark, Shader.TileMode.CLAMP));
+                    } else {
+                        paint.setShader(null);
+                        paint.setColor(underlineColor);
+                    }
+                } else {
+                    paint.setColor(baseColor & 0x00ffffff | 0x44000000);
+                }
                 float interval = getPixel(1);
                 for (float xOffset = 0; xOffset < getWidth(); xOffset += interval * 3) {
                     canvas.drawRect(startX + xOffset, lineStartY, startX + xOffset + interval, lineStartY + getPixel(1), paint);
                 }
             } else if (hasFocus()) { // focused
-                paint.setColor(primaryColor);
+                if (underlineColorDark != -1) {
+                    paint.setShader(new LinearGradient(startX, lineStartY, endX, lineStartY,
+                            underlineColor, underlineColorDark, Shader.TileMode.CLAMP));
+                } else {
+                    paint.setColor(primaryColor);
+                }
                 canvas.drawRect(startX, lineStartY, endX, lineStartY + getPixel(2), paint);
             } else { // normal
-                paint.setColor(underlineColor != -1 ? underlineColor : baseColor & 0x00ffffff | 0x1E000000);
-                canvas.drawRect(startX, lineStartY, endX, lineStartY + getPixel(1), paint);
+                if (underlineColor != -1) {
+                    if (underlineColorDark != -1) {
+                        paint.setShader(new LinearGradient(startX, lineStartY, endX, lineStartY,
+                                underlineColor, underlineColorDark, Shader.TileMode.CLAMP));
+                    } else {
+                        paint.setShader(null);
+                        paint.setColor(underlineColor);
+                    }
+                } else {
+                    paint.setColor(baseColor & 0x00ffffff | 0x1E000000);
+                }
+                canvas.drawRect(startX, lineStartY, endX, lineStartY + getPixel(2), paint);
             }
         }
 
@@ -1389,11 +1454,8 @@ public class MaterialEditText extends AppCompatEditText {
             if (tempErrorText != null || ((helperTextAlwaysShown || hasFocus()) && !TextUtils.isEmpty(helperText))) { // error text or helper text
                 textPaint.setColor(tempErrorText != null ? errorColor : helperTextColor != -1 ? helperTextColor : (baseColor & 0x00ffffff | 0x44000000));
                 canvas.save();
-                if (isRTL()) {
-                    canvas.translate(endX - textLayout.getWidth(), lineStartY + bottomSpacing - bottomTextPadding);
-                } else {
-                    canvas.translate(startX + getBottomTextLeftOffset(), lineStartY + bottomSpacing - bottomTextPadding);
-                }
+                canvas.translate(endX - textPaint.measureText(tempErrorText), lineStartY + bottomSpacing -
+                        bottomTextPadding);
                 textLayout.draw(canvas);
                 canvas.restore();
             }
