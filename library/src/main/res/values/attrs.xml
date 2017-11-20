@@ -82,7 +82,9 @@
 
         <attr name="met_errorColorDark" format="color"/>
 
-        <attr name="met_baseColorDark" format="color"/>
+        <attr name="met_underlineColorUnfocused" format="color"/>
+
+        <attr name="met_underlineColorUnfocusedDark" format="color"/>
 
     </declare-styleable>
 </resources>

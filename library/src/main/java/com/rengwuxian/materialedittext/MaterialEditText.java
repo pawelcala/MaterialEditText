@@ -302,9 +302,11 @@ public class MaterialEditText extends AppCompatEditText {
 
     private int underlineColorDark = -1;
 
-    private int errorColorDark = -1;
+    private int underlineColorUnfocused = -1;
 
-    private int normalColorDark = -1;
+    private int underlineColorUnfocusedDark = -1;
+
+    private int errorColorDark = -1;
 
     private boolean showClearButton;
     private boolean firstShown;
@@ -373,8 +375,10 @@ public class MaterialEditText extends AppCompatEditText {
         underlineColorDark = typedArray.getColor(R.styleable
                 .MaterialEditText_met_underlineColorDark, -1);
 
-        normalColorDark = typedArray.getColor(R.styleable
-                .MaterialEditText_met_baseColorDark, -1);
+        underlineColorUnfocused = typedArray.getColor(R.styleable
+                .MaterialEditText_met_underlineColorUnfocused, baseColor);
+        underlineColorUnfocusedDark = typedArray.getColor(R.styleable
+                .MaterialEditText_met_underlineColorUnfocusedDark, -1);
 
         errorColorDark = typedArray.getColor(R.styleable
                 .MaterialEditText_met_errorColorDark, -1);
@@ -736,11 +740,6 @@ public class MaterialEditText extends AppCompatEditText {
 
     public void setErrorColorDark(int color) {
         this.errorColorDark = color;
-        postInvalidate();
-    }
-
-    public void setNormalColorDark(int color) {
-        this.normalColorDark = color;
         postInvalidate();
     }
 
@@ -1345,6 +1344,16 @@ public class MaterialEditText extends AppCompatEditText {
         return bottomLinesAnimator;
     }
 
+    private void setPaintColor(Paint paint, int color) {
+        paint.setShader(null);
+        paint.setColor(color);
+    }
+
+    private void setPaintColor(Paint paint, int color, int color2, int x, int y, int x2, int y2) {
+        paint.setShader(new LinearGradient(x, y, x2, y2,
+                color, color2, Shader.TileMode.CLAMP));
+    }
+
     @Override
     protected void onDraw(@NonNull Canvas canvas) {
 
@@ -1388,53 +1397,7 @@ public class MaterialEditText extends AppCompatEditText {
         // draw the underline
         if (!hideUnderline) {
             lineStartY += bottomSpacing;
-            if (!isInternalValid()) { // not valid
-                if (errorColorDark != -1) {
-                    paint.setShader(new LinearGradient(startX, lineStartY, endX, lineStartY,
-                            errorColor, errorColorDark, Shader.TileMode.CLAMP));
-                } else {
-                    paint.setShader(null);
-                    paint.setColor(errorColor);
-                }
-                canvas.drawRect(startX, lineStartY, endX, lineStartY + getPixel(2), paint);
-            } else if (!isEnabled()) { // disabled
-                if (underlineColor != -1) {
-                    if (underlineColorDark != -1) {
-                        paint.setShader(new LinearGradient(startX, lineStartY, endX, lineStartY,
-                                underlineColor, underlineColorDark, Shader.TileMode.CLAMP));
-                    } else {
-                        paint.setShader(null);
-                        paint.setColor(underlineColor);
-                    }
-                } else {
-                    paint.setColor(baseColor & 0x00ffffff | 0x44000000);
-                }
-                float interval = getPixel(1);
-                for (float xOffset = 0; xOffset < getWidth(); xOffset += interval * 3) {
-                    canvas.drawRect(startX + xOffset, lineStartY, startX + xOffset + interval, lineStartY + getPixel(1), paint);
-                }
-            } else if (hasFocus()) { // focused
-                if (underlineColorDark != -1) {
-                    paint.setShader(new LinearGradient(startX, lineStartY, endX, lineStartY,
-                            underlineColor, underlineColorDark, Shader.TileMode.CLAMP));
-                } else {
-                    paint.setColor(primaryColor);
-                }
-                canvas.drawRect(startX, lineStartY, endX, lineStartY + getPixel(2), paint);
-            } else { // normal
-                if (underlineColor != -1) {
-                    if (underlineColorDark != -1) {
-                        paint.setShader(new LinearGradient(startX, lineStartY, endX, lineStartY,
-                                underlineColor, underlineColorDark, Shader.TileMode.CLAMP));
-                    } else {
-                        paint.setShader(null);
-                        paint.setColor(underlineColor);
-                    }
-                } else {
-                    paint.setColor(baseColor & 0x00ffffff | 0x1E000000);
-                }
-                canvas.drawRect(startX, lineStartY, endX, lineStartY + getPixel(2), paint);
-            }
+            drawUnderline(canvas, startX, endX, lineStartY);
         }
 
         textPaint.setTextSize(bottomTextSize);
@@ -1515,6 +1478,79 @@ public class MaterialEditText extends AppCompatEditText {
 
         // draw the original things
         super.onDraw(canvas);
+    }
+
+    private void drawUnderline(@NonNull Canvas canvas, int startX, int endX, int lineStartY) {
+        if (!isInternalValid()) { // not valid
+            drawUnderlineError(canvas, startX, endX, lineStartY);
+        } else if (!isEnabled()) { // disabled
+            drawUnderlineDisabled(canvas, startX, endX, lineStartY);
+        } else if (hasFocus()) { // focused
+            drawUnderlineFocused(canvas, startX, endX, lineStartY);
+        } else { // normal
+            drawUnderlineNormal(canvas, startX, endX, lineStartY);
+        }
+    }
+
+    private void drawUnderlineNormal(@NonNull Canvas canvas, int startX, int endX, int lineStartY) {
+        if (underlineColor != -1) {
+            if (getText().length() > 0) {
+                if (underlineColorDark != -1) {
+                    setPaintColor(paint, underlineColor, underlineColorDark, startX, lineStartY, endX,
+                            lineStartY);
+                } else {
+                    setPaintColor(paint, underlineColor);
+                }
+            } else {
+                if (underlineColorUnfocusedDark != -1) {
+                    setPaintColor(paint, underlineColorUnfocused, underlineColorUnfocusedDark, startX, lineStartY, endX,
+                            lineStartY);
+                } else {
+                    setPaintColor(paint, underlineColorUnfocused);
+                }
+            }
+        } else {
+            paint.setColor(baseColor & 0x00ffffff | 0x1E000000);
+        }
+        canvas.drawRect(startX, lineStartY, endX, lineStartY + getPixel(2), paint);
+    }
+
+    private void drawUnderlineFocused(@NonNull Canvas canvas, int startX, int endX, int lineStartY) {
+        if (underlineColorDark != -1) {
+            paint.setShader(new LinearGradient(startX, lineStartY, endX, lineStartY,
+                    underlineColor, underlineColorDark, Shader.TileMode.CLAMP));
+        } else {
+            paint.setColor(primaryColor);
+        }
+        canvas.drawRect(startX, lineStartY, endX, lineStartY + getPixel(2), paint);
+    }
+
+    private void drawUnderlineDisabled(@NonNull Canvas canvas, int startX, int endX, int lineStartY) {
+        if (underlineColor != -1) {
+            if (underlineColorDark != -1) {
+                paint.setShader(new LinearGradient(startX, lineStartY, endX, lineStartY,
+                        underlineColor, underlineColorDark, Shader.TileMode.CLAMP));
+            } else {
+                paint.setShader(null);
+                paint.setColor(underlineColor);
+            }
+        } else {
+            paint.setColor(baseColor & 0x00ffffff | 0x44000000);
+        }
+        float interval = getPixel(1);
+        for (float xOffset = 0; xOffset < getWidth(); xOffset += interval * 3) {
+            canvas.drawRect(startX + xOffset, lineStartY, startX + xOffset + interval, lineStartY + getPixel(1), paint);
+        }
+    }
+
+    private void drawUnderlineError(@NonNull Canvas canvas, int startX, int endX, int lineStartY) {
+        if (errorColorDark != -1) {
+            setPaintColor(paint, errorColor, errorColorDark, startX, lineStartY, endX,
+                    lineStartY);
+        } else {
+            setPaintColor(paint, errorColor);
+        }
+        canvas.drawRect(startX, lineStartY, endX, lineStartY + getPixel(2), paint);
     }
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
