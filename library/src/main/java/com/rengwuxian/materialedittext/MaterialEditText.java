@@ -301,10 +301,9 @@ public class MaterialEditText extends AppCompatEditText {
     private boolean dimInactiveLabel = true;
 
     private int underlineColorDark = -1;
-
     private int underlineColorUnfocused = -1;
-
     private int underlineColorUnfocusedDark = -1;
+    private float underlineWidth;
 
     private int errorColorDark = -1;
 
@@ -379,6 +378,7 @@ public class MaterialEditText extends AppCompatEditText {
                 .MaterialEditText_met_underlineColorUnfocused, baseColor);
         underlineColorUnfocusedDark = typedArray.getColor(R.styleable
                 .MaterialEditText_met_underlineColorUnfocusedDark, -1);
+        underlineWidth = typedArray.getDimension(R.styleable.MaterialEditText_met_underlineWidth, getPixel(2));
 
         errorColorDark = typedArray.getColor(R.styleable
                 .MaterialEditText_met_errorColorDark, -1);
@@ -1512,7 +1512,7 @@ public class MaterialEditText extends AppCompatEditText {
         } else {
             paint.setColor(baseColor & 0x00ffffff | 0x1E000000);
         }
-        canvas.drawRect(startX, lineStartY, endX, lineStartY + getPixel(2), paint);
+        canvas.drawRect(startX, lineStartY, endX, lineStartY + underlineWidth, paint);
     }
 
     private void drawUnderlineFocused(@NonNull Canvas canvas, int startX, int endX, int lineStartY) {
@@ -1522,7 +1522,7 @@ public class MaterialEditText extends AppCompatEditText {
         } else {
             paint.setColor(primaryColor);
         }
-        canvas.drawRect(startX, lineStartY, endX, lineStartY + getPixel(2), paint);
+        canvas.drawRect(startX, lineStartY, endX, lineStartY + underlineWidth, paint);
     }
 
     private void drawUnderlineDisabled(@NonNull Canvas canvas, int startX, int endX, int lineStartY) {
@@ -1539,7 +1539,7 @@ public class MaterialEditText extends AppCompatEditText {
         }
         float interval = getPixel(1);
         for (float xOffset = 0; xOffset < getWidth(); xOffset += interval * 3) {
-            canvas.drawRect(startX + xOffset, lineStartY, startX + xOffset + interval, lineStartY + getPixel(1), paint);
+            canvas.drawRect(startX + xOffset, lineStartY, startX + xOffset + interval, lineStartY + underlineWidth, paint);
         }
     }
 
@@ -1550,7 +1550,7 @@ public class MaterialEditText extends AppCompatEditText {
         } else {
             setPaintColor(paint, errorColor);
         }
-        canvas.drawRect(startX, lineStartY, endX, lineStartY + getPixel(2), paint);
+        canvas.drawRect(startX, lineStartY, endX, lineStartY + underlineWidth, paint);
     }
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
