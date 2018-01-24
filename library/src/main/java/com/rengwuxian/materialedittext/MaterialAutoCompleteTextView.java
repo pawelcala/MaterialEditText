@@ -8,8 +8,10 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
+import android.graphics.Shader;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
@@ -293,6 +295,24 @@ public class MaterialAutoCompleteTextView extends AppCompatAutoCompleteTextView 
    */
   private boolean validateOnFocusLost;
 
+  /**
+   * Alpha color of label on unfocused editText
+   */
+  private boolean dimInactiveLabel = true;
+
+  private int underlineColorDark = -1;
+  private int underlineColorUnfocused = -1;
+  private int underlineColorUnfocusedDark = -1;
+  private float underlineWidth;
+
+  private int textIndentLeft;
+  private int textIndentRight;
+  private int labelIndentLeft;
+  private int labelIndentRight;
+
+  private int errorColorDark = -1;
+
+
   private boolean showClearButton;
   private boolean firstShown;
   private int iconSize;
@@ -411,6 +431,26 @@ public class MaterialAutoCompleteTextView extends AppCompatAutoCompleteTextView 
     helperTextAlwaysShown = typedArray.getBoolean(R.styleable.MaterialEditText_met_helperTextAlwaysShown, false);
     validateOnFocusLost = typedArray.getBoolean(R.styleable.MaterialEditText_met_validateOnFocusLost, false);
     checkCharactersCountAtBeginning = typedArray.getBoolean(R.styleable.MaterialEditText_met_checkCharactersCountAtBeginning, true);
+
+    dimInactiveLabel = typedArray.getBoolean(R.styleable.MaterialEditText_met_dimInactiveLabel, false);
+
+    textIndentLeft = typedArray.getDimensionPixelSize(R.styleable.MaterialEditText_met_textIndentLeft, 0);
+    textIndentRight = typedArray.getDimensionPixelSize(R.styleable.MaterialEditText_met_textIndentRight, 0);
+    labelIndentLeft = typedArray.getDimensionPixelSize(R.styleable.MaterialEditText_met_labelIndentLeft, 0);
+    labelIndentRight = typedArray.getDimensionPixelSize(R.styleable.MaterialEditText_met_labelIndentRight, 0);
+
+    underlineColorDark = typedArray.getColor(R.styleable
+            .MaterialEditText_met_underlineColorDark, -1);
+
+    underlineColorUnfocused = typedArray.getColor(R.styleable
+            .MaterialEditText_met_underlineColorUnfocused, baseColor);
+    underlineColorUnfocusedDark = typedArray.getColor(R.styleable
+            .MaterialEditText_met_underlineColorUnfocusedDark, -1);
+    underlineWidth = typedArray.getDimension(R.styleable.MaterialEditText_met_underlineWidth, getPixel(2));
+
+    errorColorDark = typedArray.getColor(R.styleable
+            .MaterialEditText_met_errorColorDark, -1);
+
     typedArray.recycle();
 
     int[] paddings = new int[]{
@@ -427,6 +467,8 @@ public class MaterialAutoCompleteTextView extends AppCompatAutoCompleteTextView 
     innerPaddingRight = paddingsTypedArray.getDimensionPixelSize(3, padding);
     innerPaddingBottom = paddingsTypedArray.getDimensionPixelSize(4, padding);
     paddingsTypedArray.recycle();
+
+
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
       setBackground(null);
@@ -770,9 +812,32 @@ public class MaterialAutoCompleteTextView extends AppCompatAutoCompleteTextView 
     correctPaddings();
   }
 
+  public void setTextIndent(int indentLeft, int indentRight) {
+    textIndentLeft = indentLeft;
+    textIndentRight = indentRight;
+    correctPaddings();
+  }
+
+  public void setLabelIndent(int indentLeft, int indentRight) {
+    labelIndentLeft = indentLeft;
+    labelIndentRight = indentRight;
+    correctPaddings();
+  }
+
   /**
    * Set paddings to the correct values
    */
+//  private void correctPaddings() {
+//    int buttonsWidthLeft = 0, buttonsWidthRight = 0;
+//    int buttonsWidth = iconOuterWidth * getButtonsCount();
+//    if (isRTL()) {
+//      buttonsWidthLeft = buttonsWidth;
+//    } else {
+//      buttonsWidthRight = buttonsWidth;
+//    }
+//    super.setPadding(innerPaddingLeft + extraPaddingLeft + buttonsWidthLeft, innerPaddingTop + extraPaddingTop, innerPaddingRight + extraPaddingRight + buttonsWidthRight, innerPaddingBottom + extraPaddingBottom);
+//  }
+
   private void correctPaddings() {
     int buttonsWidthLeft = 0, buttonsWidthRight = 0;
     int buttonsWidth = iconOuterWidth * getButtonsCount();
@@ -781,7 +846,11 @@ public class MaterialAutoCompleteTextView extends AppCompatAutoCompleteTextView 
     } else {
       buttonsWidthRight = buttonsWidth;
     }
-    super.setPadding(innerPaddingLeft + extraPaddingLeft + buttonsWidthLeft, innerPaddingTop + extraPaddingTop, innerPaddingRight + extraPaddingRight + buttonsWidthRight, innerPaddingBottom + extraPaddingBottom);
+    int paddingLeft = innerPaddingLeft + extraPaddingLeft + buttonsWidthLeft + textIndentLeft;
+    int paddingTop = innerPaddingTop + extraPaddingTop;
+    int paddintRight = innerPaddingRight + extraPaddingRight + buttonsWidthRight + textIndentRight;
+    int paddintBottom = innerPaddingBottom + extraPaddingBottom;
+    super.setPadding(paddingLeft, paddingTop, paddintRight, paddintBottom);
   }
 
   private int getButtonsCount() {
@@ -1271,9 +1340,13 @@ public class MaterialAutoCompleteTextView extends AppCompatAutoCompleteTextView 
 
   @Override
   protected void onDraw(@NonNull Canvas canvas) {
-    int startX = getScrollX() + (iconLeftBitmaps == null ? 0 : (iconOuterWidth + iconPadding));
-    int endX = getScrollX() + (iconRightBitmaps == null ? getWidth() : getWidth() - iconOuterWidth - iconPadding);
+    int startX = getScrollX() + (iconLeftBitmaps == null ? 0 : (iconOuterWidth + iconPadding)) + getPaddingLeft();
+    int endX = getScrollX() + (iconRightBitmaps == null ? getWidth() : getWidth() -
+            iconOuterWidth - iconPadding) - getPaddingRight();
     int lineStartY = getScrollY() + getHeight() - getPaddingBottom();
+
+    startX -= textIndentLeft;
+    endX += textIndentRight;
 
     // draw the icon(s)
     paint.setAlpha(255);
@@ -1308,22 +1381,7 @@ public class MaterialAutoCompleteTextView extends AppCompatAutoCompleteTextView 
     // draw the underline
     if (!hideUnderline) {
       lineStartY += bottomSpacing;
-      if (!isInternalValid()) { // not valid
-        paint.setColor(errorColor);
-        canvas.drawRect(startX, lineStartY, endX, lineStartY + getPixel(2), paint);
-      } else if (!isEnabled()) { // disabled
-        paint.setColor(underlineColor != -1 ? underlineColor : baseColor & 0x00ffffff | 0x44000000);
-        float interval = getPixel(1);
-        for (float xOffset = 0; xOffset < getWidth(); xOffset += interval * 3) {
-          canvas.drawRect(startX + xOffset, lineStartY, startX + xOffset + interval, lineStartY + getPixel(1), paint);
-        }
-      } else if (hasFocus()) { // focused
-        paint.setColor(primaryColor);
-        canvas.drawRect(startX, lineStartY, endX, lineStartY + getPixel(2), paint);
-      } else { // normal
-        paint.setColor(underlineColor != -1 ? underlineColor : baseColor & 0x00ffffff | 0x1E000000);
-        canvas.drawRect(startX, lineStartY, endX, lineStartY + getPixel(1), paint);
-      }
+      drawUnderline(canvas, startX, endX, lineStartY);
     }
 
     textPaint.setTextSize(bottomTextSize);
@@ -1366,8 +1424,10 @@ public class MaterialAutoCompleteTextView extends AppCompatAutoCompleteTextView 
         floatingLabelStartX = (int) (endX - floatingLabelWidth);
       } else if ((getGravity() & Gravity.LEFT) == Gravity.LEFT) {
         floatingLabelStartX = startX;
+        floatingLabelStartX += labelIndentLeft;
       } else {
         floatingLabelStartX = startX + (int) (getInnerPaddingLeft() + (getWidth() - getInnerPaddingLeft() - getInnerPaddingRight() - floatingLabelWidth) / 2);
+        floatingLabelStartX += labelIndentLeft;
       }
 
       // calculate the vertical position
@@ -1375,7 +1435,13 @@ public class MaterialAutoCompleteTextView extends AppCompatAutoCompleteTextView 
       int floatingLabelStartY = (int) (innerPaddingTop + floatingLabelTextSize + floatingLabelPadding - distance * (floatingLabelAlwaysShown ? 1 : floatingLabelFraction) + getScrollY());
 
       // calculate the alpha
-      int alpha = ((int) ((floatingLabelAlwaysShown ? 1 : floatingLabelFraction) * 0xff * (0.74f * focusFraction * (isEnabled() ? 1 : 0) + 0.26f) * (floatingLabelTextColor != -1 ? 1 : Color.alpha(floatingLabelTextColor) / 256f)));
+      int alpha = 255;
+      if (dimInactiveLabel) {
+        alpha = ((int) ((floatingLabelAlwaysShown ? 1 : floatingLabelFraction) * 0xff * (0.74f *
+                focusFraction * (isEnabled() ? 1 : 0) + 0.26f) * (floatingLabelTextColor != -1 ? 1 : Color.alpha(floatingLabelTextColor) / 255f)));
+      } else {
+        alpha = (int) (255 * (floatingLabelAlwaysShown ? 1 : floatingLabelFraction));
+      }
       textPaint.setAlpha(alpha);
 
       // draw the floating label
@@ -1400,6 +1466,89 @@ public class MaterialAutoCompleteTextView extends AppCompatAutoCompleteTextView 
 
     // draw the original things
     super.onDraw(canvas);
+  }
+
+  private void drawUnderline(@NonNull Canvas canvas, int startX, int endX, int lineStartY) {
+    if (!isInternalValid()) { // not valid
+      drawUnderlineError(canvas, startX, endX, lineStartY);
+    } else if (!isEnabled()) { // disabled
+      drawUnderlineDisabled(canvas, startX, endX, lineStartY);
+    } else if (hasFocus()) { // focused
+      drawUnderlineFocused(canvas, startX, endX, lineStartY);
+    } else { // normal
+      drawUnderlineNormal(canvas, startX, endX, lineStartY);
+    }
+  }
+
+  private void drawUnderlineNormal(@NonNull Canvas canvas, int startX, int endX, int lineStartY) {
+    if (underlineColor != -1) {
+      if (getText().length() > 0) {
+        if (underlineColorDark != -1) {
+          setPaintColor(paint, underlineColor, underlineColorDark, startX, lineStartY, endX,
+                  lineStartY);
+        } else {
+          setPaintColor(paint, underlineColor);
+        }
+      } else {
+        if (underlineColorUnfocusedDark != -1) {
+          setPaintColor(paint, underlineColorUnfocused, underlineColorUnfocusedDark, startX, lineStartY, endX,
+                  lineStartY);
+        } else {
+          setPaintColor(paint, underlineColorUnfocused);
+        }
+      }
+    } else {
+      paint.setColor(baseColor & 0x00ffffff | 0x1E000000);
+    }
+    canvas.drawRect(startX, lineStartY, endX, lineStartY + underlineWidth, paint);
+  }
+
+  private void drawUnderlineFocused(@NonNull Canvas canvas, int startX, int endX, int lineStartY) {
+    if (underlineColorDark != -1) {
+      paint.setShader(new LinearGradient(startX, lineStartY, endX, lineStartY,
+              underlineColor, underlineColorDark, Shader.TileMode.CLAMP));
+    } else {
+      paint.setColor(primaryColor);
+    }
+    canvas.drawRect(startX, lineStartY, endX, lineStartY + underlineWidth, paint);
+  }
+
+  private void drawUnderlineDisabled(@NonNull Canvas canvas, int startX, int endX, int lineStartY) {
+    if (underlineColor != -1) {
+      if (underlineColorDark != -1) {
+        paint.setShader(new LinearGradient(startX, lineStartY, endX, lineStartY,
+                underlineColor, underlineColorDark, Shader.TileMode.CLAMP));
+      } else {
+        paint.setShader(null);
+        paint.setColor(underlineColor);
+      }
+    } else {
+      paint.setColor(baseColor & 0x00ffffff | 0x44000000);
+    }
+    float interval = getPixel(1);
+    for (float xOffset = 0; xOffset < getWidth(); xOffset += interval * 3) {
+      canvas.drawRect(startX + xOffset, lineStartY, startX + xOffset + interval, lineStartY + underlineWidth, paint);
+    }
+  }
+
+  private void drawUnderlineError(@NonNull Canvas canvas, int startX, int endX, int lineStartY) {
+    if (errorColorDark != -1) {
+      setPaintColor(paint, errorColor, errorColorDark, startX, lineStartY, endX,
+              lineStartY);
+    } else {
+      setPaintColor(paint, errorColor);
+    }
+    canvas.drawRect(startX, lineStartY, endX, lineStartY + underlineWidth, paint);
+  }
+
+  private void setPaintColor(Paint paint, int color) {
+    paint.setShader(null);
+    paint.setColor(color);
+  }
+
+  private void setPaintColor(Paint paint, int color, int color2, int x, int y, int x2, int y2) {
+    paint.setShader(new LinearGradient(x, y, x2, y2,
+            color, color2, Shader.TileMode.CLAMP));
   }
 
   @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
